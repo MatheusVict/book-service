@@ -1,6 +1,7 @@
 package br.com.erudio.bookservice.controller;
 
 import br.com.erudio.bookservice.model.Book;
+import br.com.erudio.bookservice.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,8 @@ public class BookController {
 
   @Autowired
   Environment environment;
+  @Autowired
+  BookRepository bookRepository;
 
 
   @GetMapping("/{bookId}/{currency}")
@@ -24,14 +27,12 @@ public class BookController {
           @PathVariable("currency") String currency
   ) {
     var port = environment.getProperty("local.server.port");
-    return new Book(
-            1L,
-            "Uncle Bobo",
-            "Clean code",
-            new Date(),
-            Double.valueOf(13.7),
-            currency,
-            port
-            );
+
+    var book = bookRepository.getById(bookId);
+    if (book == null) throw new RuntimeException("Book not found");
+
+    book.setEnvironment(port);
+
+    return book;
   }
 }
