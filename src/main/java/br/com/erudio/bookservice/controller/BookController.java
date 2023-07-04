@@ -1,6 +1,7 @@
 package br.com.erudio.bookservice.controller;
 
 import br.com.erudio.bookservice.model.Book;
+import br.com.erudio.bookservice.proxy.CambioProxy;
 import br.com.erudio.bookservice.repository.BookRepository;
 import br.com.erudio.bookservice.response.Cambio;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +21,13 @@ public class BookController {
 
   private final Environment environment;
   private final BookRepository bookRepository;
+  private final CambioProxy cambioProxy;
 
   @Autowired
-  public BookController(Environment environment, BookRepository bookRepository) {
+  public BookController(Environment environment, BookRepository bookRepository, CambioProxy cambioProxy) {
     this.environment = environment;
     this.bookRepository = bookRepository;
+    this.cambioProxy = cambioProxy;
   }
 
 
@@ -36,27 +39,12 @@ public class BookController {
 
     if (book == null) throw new RuntimeException("Book not found");
 
-    HashMap<String, String> params = createCambioParams(book.getPrice().toString(), currency);
-    Cambio cambio = retrieveCambio(params);
+    Cambio cambio = cambioProxy.getCambio(book.getPrice(), "USD", currency);
 
-    book.setEnvironment(port);
+    book.setEnvironment(port + "FEING");
 
     book.setPrice(cambio.getConvertedValue());
 
     return book;
-  }
-
-  private HashMap<String, String> createCambioParams (String amount, String currency) {
-    HashMap<String, String> params = new HashMap<>();
-
-    params.put("amount", amount);
-    params.put("from", "USD");
-    params.put("to", currency);
-    return params;
-  }
-
-  private Cambio retrieveCambio(HashMap<String, String> params) {
-    String url = "http://localhost:8000/cambio-service/{amount}/{from}/{to}";
-    return new RestTemplate().getForEntity(url, Cambio.class, params).getBody();
   }
 }
