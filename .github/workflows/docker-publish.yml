@@ -1,10 +1,5 @@
 name: Continuos Integration with github
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 on:
   push:
     branches: [ "main" ]
@@ -32,3 +27,8 @@ jobs:
 
       - name: Build Book service Container Image
         run: mvn spring-boot:build-image -DskipTests
+        
+      - name: Push to Docker Hub Container Resgisty
+        run: |
+          docker tag ${{ secrets.DOCKER_USERNAME }}/book-service:0.0.1-SNAPSHOT ${{ secrets.DOCKER_USERNAME }}/book-service:${{ github.run_id }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/book-service:${{ github.run_id }}
